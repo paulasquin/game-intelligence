@@ -29,7 +29,9 @@ class Client(th.Thread):
     def run(self):
         # We have to start by sending NME and our team name
         # wait_msg(self.server_con, b"NME", 5)
-        nme_msg = struct.pack('3c c ' + str(len(TEAM_NAME)) + 'c', b"NME", bytes(len(TEAM_NAME)), bytes(TEAM_NAME))
+        msg_format = '3c c ' + str(len(TEAM_NAME)) + 'c'
+        print(msg_format)
+        nme_msg = struct.pack(msg_format, bytes(len(TEAM_NAME)), TEAM_NAME.encode('utf-8'))
         print(nme_msg)
         self.server_con.send(nme_msg)
         rep = b""
