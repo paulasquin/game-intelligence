@@ -1,9 +1,11 @@
 import socket
 import time
 import threading as th
+import struct
 
 host = 'localhost'
-port = 12800
+port = 5555
+TEAM_NAME = "Test"
 
 
 def wait_msg(external_con, msg, delay):
@@ -17,30 +19,6 @@ def wait_msg(external_con, msg, delay):
         raise NameError("Failed receiving " + str(msg))
 
 
-class Server(th.Thread):
-    def __init__(self):
-        th.Thread.__init__(self)
-        self.main_con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.main_con.bind(('', port))
-        self.main_con.listen(5)
-
-    def run(self):
-        # init connexion
-        client_con, info_con = self.main_con.accept()
-
-        client_con.send(b"HLO")
-        wait_msg(client_con, b"HLO", 5)
-
-        msg = b""
-        while msg != b"QUT":
-            msg = client_con.recv(1024)
-            client_con.send(compute(msg).encode())
-
-        print("Closing server")
-        client_con.close()
-        self.main_con.close()
-
-
 class Client(th.Thread):
     def __init__(self):
         print("Initialing client")
@@ -49,13 +27,13 @@ class Client(th.Thread):
         self.server_con.connect((host, port))
 
     def run(self):
-        wait_msg(self.server_con, b"HLO", 5)
-        self.server_con.send(b"HLO")
-
-        msg = b""
-        while msg != b"QUT":
-            msg = input("> ").encode()
-            self.server_con.send(msg)
+        # We have to start by sending NME and our team name
+        # wait_msg(self.server_con, b"NME", 5)
+        nme_msg = struct.pack('3c c ' + str(len(TEAM_NAME)) + 'c', b"NME", bytes(len(TEAM_NAME)), bytes(TEAM_NAME))
+        print(nme_msg)
+        self.server_con.send(nme_msg)
+        rep = b""
+        while rep != b"BYE":
             rep = self.server_con.recv(1024)
             print(rep.decode())
         print("Closing client")
@@ -63,12 +41,13 @@ class Client(th.Thread):
 
 
 def main():
-    server = Server()
-    server.start()
+    # server = Server()
+    # server.start()
     client = Client()
     client.start()
-    server.join()
+    # server.join()
     client.join()
 
 
-main()
+if __name__ == "__main__":
+    main()
