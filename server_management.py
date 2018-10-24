@@ -1,53 +1,116 @@
 import socket
-import time
+import subprocess
+import os
 import threading as th
 import struct
 
-host = 'localhost'
-port = 5555
+HOST = 'localhost'
+PORT = 5555
 TEAM_NAME = "Test"
+PATH_SERVER = 'Resources/VampiresVSWerewolvesGameServer.exe'
 
 
-def wait_msg(external_con, msg, delay):
-    # wait for receiving HLO, wait for less than 5 sec
-    rep = b""
-    start_wait = time.time()
-    while rep != msg and time.time() - start_wait < delay:
-        rep = external_con.recv(1024)
-    # if we didn't received msg, raise an error
-    if rep != msg:
-        raise NameError("Failed receiving " + str(msg))
+class Map:
+    height = None
+    width = None
+    number_of_homes = None
+    homes_raw = None
+    start_position = None
+    number_map_commands = None
+    map_commands_raw = None
 
 
 class Client(th.Thread):
     def __init__(self):
         print("Initialing client")
+        self.map = Map()
         th.Thread.__init__(self)
         self.server_con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_con.connect((host, port))
+        self.server_con.connect((HOST, PORT))
+
+    def send_msg(self, protocol, msg):
+        msg_format = str(len(protocol)) + 's B ' + str(len(msg)) + 's'
+        msg_pack = struct.pack(msg_format, protocol.encode('ascii'), len(msg), msg)
+        self.server_con.send(msg_pack)
+
+    def receive_data(self, size, fmt):
+        data = bytes()
+        while len(data) < size:
+            data += self.server_con.recv(size - len(data))
+        return struct.unpack(fmt, data)
+
+    def init_communication(self):
+        # SET
+        header = self.server_con.recv(3).decode("ascii")
+        if header != "SET":
+            print("Protocol Error at SET")
+        else:
+            (self.map.height, self.map.width) = self.receive_data(2, "2B")
+
+        # HUM
+        header = self.server_con.recv(3).decode("ascii")
+        if header != "HUM":
+            print("Protocol Error at HUM")
+        else:
+            self.map.number_of_homes = self.receive_data(1, "1B")[0]
+            self.map.homes_raw = self.receive_data(
+                self.map.number_of_homes * 2,
+                "{}B".format(self.map.number_of_homes * 2)
+            )
+
+        # HME
+        header = self.server_con.recv(3).decode("ascii")
+        if header != "HME":
+            print("Protocol Error at HME")
+        else:
+            self.map.start_position = tuple(self.receive_data(2, "2B"))
+
+        # MAP
+        header = self.server_con.recv(3).decode("ascii")
+        if header != "MAP":
+            print("Protocol Error at MAP")
+        else:
+            self.map.number_map_commands = self.receive_data(1, "1B")[0]
+            self.map.map_commands_raw = self.receive_data(
+                self.map.number_map_commands * 5,
+                "{}B".format(self.map.number_map_commands * 5)
+            )
 
     def run(self):
         # We have to start by sending NME and our team name
-        # wait_msg(self.server_con, b"NME", 5)
-        msg_format = '3c c ' + str(len(TEAM_NAME)) + 'c'
-        print(msg_format)
-        nme_msg = struct.pack(msg_format, bytes(len(TEAM_NAME)), TEAM_NAME.encode('utf-8'))
-        print(nme_msg)
-        self.server_con.send(nme_msg)
-        rep = b""
-        while rep != b"BYE":
-            rep = self.server_con.recv(1024)
-            print(rep.decode())
+        self.send_msg("NME", TEAM_NAME.encode('ascii'))
+
+        # Then the server is going to answer information SET, HUM, HME and MAP. We have to handle their unpacking
+        self.init_communication()
+        print(self.map.__dict__)
         print("Closing client")
         self.server_con.close()
+
+
+class Server(th.Thread):
+    def __init__(self):
+        print("Starting server program")
+        th.Thread.__init__(self)
+
+    def run(self):
+        # p = subprocess.Popen(
+        #     [PATH_SERVER],
+        #     shell=False,
+        #     stdout=subprocess.PIPE,
+        #     stderr=subprocess.PIPE
+        # )
+        # stdout, stderr = p.communicate()
+        # print(stdout)
+        os.system('start ' + PATH_SERVER)
 
 
 def main():
     # server = Server()
     # server.start()
+    # time.sleep(9)
+
     client = Client()
     client.start()
-    # server.join()
     client.join()
 
 
