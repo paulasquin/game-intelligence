@@ -41,6 +41,42 @@ def send_move(sock,mov_command):
 	sock.send(struct.pack("2B",4,4))
 
 #------------------------------------------------------------------------------------------------------------
+def update_board_matrix(board_matrix,agent_state):
+
+	board_info = list(agent_state['map_commands_raw'])
+
+	print(board_info)
+
+	for i in range(len(board_info)):
+
+		if i%5==0:
+			temp_dict = {'cell_human_count':board_info[i+2],'cell_vampire_count':board_info[i+3],'cell_werewolves_count':board_info[i+4]}
+			board_matrix[board_info[i+1]] [board_info[i]] = temp_dict
+
+	return board_matrix
+
+
+
+#------------------------------------------------------------------------------------------------------------
+def identify_species(board_matrix,agent_state):
+
+	x_initial = agent_state['start_position'][0]
+	y_initial = agent_state['start_position'][1]
+
+	temp_dict = board_matrix[y_initial][x_initial]
+
+	#print(temp_dict)
+
+	if temp_dict['cell_vampire_count'] > 0:
+		species_dict = {'our_species':'vampires','opponent_species':'werewolves'}
+	elif temp_dict['cell_werewolves_count'] > 0:
+		species_dict = {'our_species':'werewolves','opponent_species':'vampires'}
+
+	return species_dict
+
+
+
+#--------------------------------------------------------------------------------------------------------------
 def start_game():
 
 	# To be set as command line arguments
@@ -105,19 +141,32 @@ def start_game():
 	print('------------------------------------------------------------------------------------------')
 
 	#Creating a Numpy Array for Board.
-	# TODO : Need to create a board matrix (each element must be a dictionary) and populate it.
-	board_matrix = np.zeros(shape=(agent_state['height'],agent_state['width']))
+	board_cell_dict = {'cell_human_count':0,'cell_vampire_count':0,'cell_werewolves_count':0}
+	board_matrix = np.full(shape=(agent_state['height'],agent_state['width']),fill_value=board_cell_dict)
+	#print(board_matrix)
 
-	print('The board Matrix: ')
-	print(board_matrix)
+	#Update_Board_Matrix
+	board_matrix = update_board_matrix(board_matrix,agent_state)
 
-	# Send Move Command Randomly or through using Seach Methods
+	#print('The board Matrix: ')
+	#print(board_matrix[3][4])
+
+
+	# Identify Who we are
+	species_dict = identify_species(board_matrix,agent_state)
+
+	if species_dict['our_species'] == 'vampires':
+		print('We are vampires')
+	elif species_dict['our_species'] == 'werewolves':
+		print('We are werewolves')
+
+	#Send Move Command Randomly or through using Seach Methods
 	#send_move(sock,'MOV')
-
-	playing_game(sock,agent_state,board_matrix)
+	
+	playing_game(sock,agent_state,board_matrix,species_dict)
 
 #---------------------------------------------------------------------------------------------------------------
-def playing_game(sock,agent_state,board_matrix):
+def playing_game(sock,agent_state,board_matrix,species_dict):
 
 	#send_move(sock,'MOV')
 
@@ -135,6 +184,7 @@ def playing_game(sock,agent_state,board_matrix):
 
 			print(agent_state)
 			print('------------------------------------------------------------------------------------------')
+			board_matrix = update_board_matrix(board_matrix,agent_state)
 
 			# Send Move Command Randomly or through using Seach Methods
 			# Also print the Board Matrix
