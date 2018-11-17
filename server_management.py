@@ -32,15 +32,16 @@ class Map:
     def matrix(self, x, y, val):
         self.__matrix[x][y] = val
 
+    def guess_species(self, start_position, map_commands_raws):
+        pass
+
     def create_objects(self):
         # Creating the matrix of the map
         print(type(self.height))
-        self.__matrix = [[None] * self.height-1] * self.width-1
+        self.__matrix = [[None] * self.height - 1] * self.width - 1
         # Create homes
         # TODO: are home an important thing to care about ? If the home doesn't protect humans in any way,
         # TODO how is a home different from a regular cell ?
-        # for id_homes in range(self.__number_of_homes):
-        #    self.matrix(self.__homes_raw[2 * id_homes], self.__homes_raw[2 * id_homes + 1], House)
 
         # Our initial position
         # TODO: is start position useful as we already have map_commands
@@ -49,14 +50,18 @@ class Map:
 
         # Fill the matrix with creatures.
         for id_command in range(self.number_map_commands):
+            # Rebuilt with allies or enemies
             creatures = [[2, Human], [3, Vampire], [4, Werewolf]]
             for creature in creatures:
                 if self.map_commands_raw(id_command * 5 + creature[0]) != 0:
                     print("Found" + str(creature[1]))
-                    self.matrix(self.map_commands_raw(id_command * 5,
-                                                      id_command * 5 + 1,
-                                                      [creature[1] for _ in range(id_command * 5 + creature[0])])
-                                )
+                    self.matrix(
+                        self.map_commands_raw(
+                            id_command * 5,
+                            id_command * 5 + 1,
+                            [creature[1] for _ in range(id_command * 5 + creature[0])]
+                        )
+                    )
 
 
 class Object:
@@ -75,13 +80,13 @@ class House(Object):
     pass
 
 
-class Vampire(Creature):
+class Allies(Creature):
     def move(self, direction):
         if direction == 'n':
             pass
 
 
-class Werewolf(Creature):
+class Enemies(Creature):
     pass
 
 
