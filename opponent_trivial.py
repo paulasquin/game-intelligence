@@ -4,6 +4,7 @@ import sys
 import struct
 import os
 import numpy as np
+from strategy_trivial import *
 
 #-------------------------------------------------------------------------------------------------------
 def start_server(SERVER_PROGRAM_PATH):
@@ -31,16 +32,35 @@ def receive_data(sock, size, fmt):
     return struct.unpack(fmt, data)
 
 #--------------------------------------------------------------------------------------------------------------
-def send_move(sock,mov_command):
 
-	## Testing the Move command. Right now just making few random moves.
+def send_move(sock,mov_command,board_matrix,agent_state,species_dict):
+
+	#Find Vampires or source coordinates of all cell with vampires
+
+	#Find Werewolves or source coordinates of all cell with werewolves
+
+	#Find Humans or coordinates of all cell with humans
+
+	#Compute Metric and get target coordinates of all cell with vampires
+
+	if species_dict['our_species'] == 'vampires':
+		total_num_moves, source_coordinate, target_coordinate, num_species_to_move, source_move_bool = get_vampires_moves(board_matrix,species_dict)
+	elif species_dict['our_species'] == 'werewolves':
+		total_num_moves, source_coordinate, target_coordinate, num_species_to_move, source_move_bool = get_werewolves_moves(board_matrix,species_dict)
+
+	#Send Move command to server
+	# Before Sending Information Back to Server we need to reverse X and Y from Numpy Array. Do remember!
+
 	sock.send(mov_command.encode("ascii"))
-	sock.send(struct.pack("1B",1))
-	sock.send(struct.pack("2B",4,1))
-	sock.send(struct.pack("1B",2))
-	sock.send(struct.pack("2B",4,2))
+	#Need to create a boolean array with value true or false. It signifies whether its good to move or not.
+	sock.send(struct.pack("1B",total_num_moves))
+
+	sock.send(struct.pack("2B",source_coordinate[0],source_coordinate[1]))
+	sock.send(struct.pack("1B",num_species_to_move[0]))
+	sock.send(struct.pack("2B",target_coordinate[0],target_coordinate[1]))
 
 #------------------------------------------------------------------------------------------------------------
+
 def update_board_matrix(board_matrix,agent_state):
 
 	board_info = list(agent_state['map_commands_raw'])
@@ -147,7 +167,6 @@ def start_game():
 	#print('The board Matrix: ')
 	#print(board_matrix[3][4])
 
-
 	# Identify Who we are
 	species_dict = identify_species(board_matrix,agent_state)
 
@@ -157,7 +176,7 @@ def start_game():
 		print('We are werewolves')
 
 	#Send Move Command Randomly or through using Seach Methods
-	send_move(sock,'MOV')
+	send_move(sock,'MOV',board_matrix,agent_state,species_dict)
 	
 	playing_game(sock,agent_state,board_matrix,species_dict)
 
@@ -184,7 +203,7 @@ def playing_game(sock,agent_state,board_matrix,species_dict):
 
 			# Send Move Command Randomly or through using Seach Methods
 			# Also print the Board Matrix
-			send_move(sock,'MOV')
+			send_move(sock,'MOV',board_matrix,agent_state,species_dict)
 
 		# END--------------------------------------------------------------------------------------------------------------
 
