@@ -5,7 +5,7 @@ import struct
 import os
 import numpy as np
 from strategy_trivial import *
-
+import time
 
 # -------------------------------------------------------------------------------------------------------
 def start_server(SERVER_PROGRAM_PATH):
@@ -56,6 +56,8 @@ def send_move(sock, mov_command, board_matrix, agent_state, species_dict):
     # Send Move command to server
     # Before Sending Information Back to Server we need to reverse X and Y from Numpy Array. Do remember!
 
+   # time.sleep(0.5)
+
     sock.send(mov_command.encode("ascii"))
     # Need to create a boolean array with value true or false. It signifies whether its good to move or not.
     sock.send(struct.pack("1B", total_num_moves))
@@ -63,6 +65,8 @@ def send_move(sock, mov_command, board_matrix, agent_state, species_dict):
     sock.send(struct.pack("2B", source_coordinate[0], source_coordinate[1]))
     sock.send(struct.pack("1B", num_species_to_move[0]))
     sock.send(struct.pack("2B", target_coordinate[0], target_coordinate[1]))
+
+    #time.sleep(0.5)
 
 
 # ------------------------------------------------------------------------------------------------------------

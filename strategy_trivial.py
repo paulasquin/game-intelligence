@@ -31,12 +31,12 @@ def get_werewolves_moves(board_matrix, species_dict):
 
         else:
             if source_coordinate[index] == board_matrix.shape[0] - 1:
-                target_coordinate.append(source_coordinate[index] - 1)
-                target_coordinate.append(source_coordinate[index + 1])
+                target_coordinate.append(source_coordinate[index] - 1)  # if going to hit bottom border, go up
+                target_coordinate.append(source_coordinate[index + 1])  # working on y
                 num_species_to_move.append(
                     board_matrix[source_coordinate[index]][source_coordinate[index + 1]]['cell_werewolves_count'])
 
-            elif source_coordinate[index] == 0:
+            elif source_coordinate[index] == 0:  # same for upper border
                 target_coordinate.append(source_coordinate[index] + 1)
                 target_coordinate.append(source_coordinate[index + 1])
                 num_species_to_move.append(
