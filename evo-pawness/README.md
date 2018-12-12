@@ -1,3 +1,13 @@
+# Note studying EvoPawness (EP) for Vampires Project (VP)
+Differences between EP and VP:
+* VP doesn't have Health Point (HP)
+* VP have kind of Attack Point (ATK) : it's the number of vampires attacking werewolves.
+**ATK of a pawn == Number of Vampires in a cell**
+* Step Point: Vampires are able to move only 1 cell at a time, but we can split the vampires.
+**Step Point <-> Vampires to move?**
+* Pawn status: describe if a pawn is "activated". This can be seen as humans we haven't transform in vampires yet.
+**Pawn status <-> Humans**
+
 # EvoPawness Game
 
 Based on the article that I write  
