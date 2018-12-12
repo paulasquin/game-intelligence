@@ -1,0 +1,4 @@
+*.ipynb
+models/*
+*.hdf5
+*.p
