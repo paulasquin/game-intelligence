@@ -37,7 +37,6 @@ best_move_migration = interface_strategy(width, height, list_vampires, list_were
 Here is how to use it
 
 ```
-"""
 NOTE : Point is an object declared in the strategy_training file, with x, y and n attibutes, integers for position and number of creatures.  
 It is used to describe positon and population of creatures in the board.
 
@@ -75,5 +74,4 @@ NOTE : Migration is an object declared in this file. it has attributes
 > RETURN
 :return best_move_migration: Migration, the best migration computed from the state provided
 
-"""
 ```
