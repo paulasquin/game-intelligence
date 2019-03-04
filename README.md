@@ -38,8 +38,20 @@ Here is how to use it
 
 ```
 """
-NOTE : Point is an object declared in this file, with x, y and n attibutes, 
+NOTE : Point is an object declared in the strategy_training file, with x, y and n attibutes, integers for position and number of creatures.  
 It is used to describe positon and population of creatures in the board.
+
+The game board axis: 
+     ------------->  Y
+    |
+    |
+    |
+    |
+    |
+    v
+    
+    X
+Paramers and return of interface_strategy()
 
 > MANDATORY PARAMETERS
 :param width: int, width of the board
