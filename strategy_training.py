@@ -20,21 +20,6 @@ import time
 # In[2]:
 
 
-class Size:
-    """
-    Object of size for 2D boards to code x and y attributes
-    
-    :param width: int, width of the board
-    :param height: int, height of the board
-    
-    :attributes x: int, number of rows (height)
-    :attributes y: int, number of columns (width)
-    """
-    def __init__(self, width, height):
-        self.x = width
-        self.y = height
-        
-
 class Point:
     """
     Code a point with its coordinates and can store a number to this point
@@ -98,8 +83,9 @@ class Board:
         :param width: int, width of the board
         :param height: int, height of the board
         """
-        self.size = Size(width, height)
-        self.board = np.zeros((self.size.x, self.size.y, 3), dtype=np.int8)
+        self.width = width
+        self.height = height
+        self.board = np.zeros((self.height, self.width, 3), dtype=np.int8)
     
     
     def init_board_set(self, list_vampires, list_werewolves, list_humans, id_board=0):
@@ -131,7 +117,7 @@ class Board:
         ## Affecting vampires in board
         n_vampires = 10
         # Creating a list of possible position in board. We positionate vampires first, every position is possible
-        potential_vampires_position = [(x,y) for x in range(self.size.x) for y in range(self.size.y)]
+        potential_vampires_position = [(x,y) for x in range(self.height) for y in range(self.width)]
         vampires_position = random.choice(potential_vampires_position)
         x_vampires, y_vampires = vampires_position
         self.board[x_vampires, y_vampires, self.id_V] = n_vampires
@@ -139,7 +125,7 @@ class Board:
         ## Affecting werewolves
         n_werewolves = 10
         # Creating a list of possible position in board. We remove vampires position from possible ones
-        potential_werewolves_position = [(x,y) for x in range(self.size.x) for y in range(self.size.y)]
+        potential_werewolves_position = [(x,y) for x in range(self.height) for y in range(self.width)]
         potential_werewolves_position.remove(vampires_position)
         werewolves_position = random.choice(potential_werewolves_position)
         x_werewolves, y_werewolves = werewolves_position
@@ -151,7 +137,7 @@ class Board:
         
         for group_n_humans in n_humans:
             # Creating a list of possible position in board. We remove vampires, werewolves, and other humans positions.
-            potential_humans_position = [(x,y) for x in range(self.size.x) for y in range(self.size.y)]
+            potential_humans_position = [(x,y) for x in range(self.height) for y in range(self.width)]
             potential_humans_position.remove(vampires_position)
             potential_humans_position.remove(werewolves_position)
             for previous_human_position in humans_position:
@@ -169,9 +155,9 @@ class Board:
         They cannot be 2 species in the same cell
         """
         
-        for x in range(self.size.x):
+        for x in range(self.height):
             line = ""
-            for y in range(self.size.y):
+            for y in range(self.width):
                 line += "|"
                 if self.board[x,y,self.id_V] != 0:
                     cell = str(int(self.board[x,y,self.id_V])) + "V"
@@ -195,6 +181,12 @@ class Board:
             print("-"*len(line))
             print(line)
         print("-"*len(line))
+    
+    def deepcopy(self):
+        new_board = Board(self.width, self.height)
+        new_board.id_board = self.id_board
+        new_board.board = self.board.copy()
+        return new_board
 
 
 # ## 3.Player object
@@ -241,10 +233,10 @@ class Player:
         
         if len(our_creatures_groups) == 0:
             # We have no creatures left
-            return (True, -1000)
+            return (True, 0)
         elif len(enemy_creatures_groups) == 0:
             # We have won, there is no enemy left
-            return (True, 1000)
+            return (True, 0)
         else:
             # The game is not finished yet
             return (False, 0)
@@ -286,7 +278,7 @@ class Player:
                 for delta_y in [-1, 0, 1]:
                     new_x = group_position.x + delta_x
                     new_y = group_position.y + delta_y
-                    if new_x < 0 or new_x >= game_board.size.x or new_y < 0 or new_y >= game_board.size.y or (delta_x == 0 and delta_y == 0):
+                    if new_x < 0 or new_x >= game_board.height or new_y < 0 or new_y >= game_board.width or (delta_x == 0 and delta_y == 0):
                         # The new point is out of the game board
                         continue
                     else:
@@ -323,7 +315,7 @@ class Player:
             # There are no species in this cell, we apply a neutral score
             score = 0
             ## Lets build the new board of this potentality
-            new_game_board = copy.deepcopy(game_board)
+            new_game_board = game_board.deepcopy()
             new_game_board.id_board += 1
             # We are leaving the original cell
             new_game_board.board[origin_position.x, origin_position.y, self.id_species] = 0
@@ -345,7 +337,7 @@ class Player:
                 # Lets consider this as a score equal to "number of converted humans"
                 score = number_of_humans
                 ## Lets build the new board of this potentality
-                new_game_board = copy.deepcopy(game_board)
+                new_game_board = game_board.deepcopy()
                 new_game_board.id_board += 1
                 # We are leaving the original cell
                 new_game_board.board[origin_position.x, origin_position.y, self.id_species] = 0
@@ -363,13 +355,18 @@ class Player:
                     
                 else:
                     P = float(E1)/E2 - 0.5
-                # We win the propability E1. Let's consider esperency
                 
-                if P<0.5:
-                    # We have lost the battle. We lose all our creatures and humans also have loses:
-                    number_of_humans_after_battle = int((1-P)*number_of_humans)
+                # We win with the propability P. Let's consider esperency
+                if P<=0.5 or number_of_humans >= our_creature_population*1.5:
+                    ## We have lost the battle. We lose all our creatures and humans also have loses:                    
+                    # Lets compute number of humans after battle
+                    if number_of_humans >= our_creature_population*1.5:
+                        number_of_humans_after_battle = number_of_humans
+                    else:
+                        number_of_humans_after_battle = int((1-P)*number_of_humans)
+                    
                     ## Lets build the new board of this potentality
-                    new_game_board = copy.deepcopy(game_board)
+                    new_game_board = game_board.deepcopy()
                     new_game_board.id_board += 1
                     # We are removed from the original cell
                     new_game_board.board[origin_position.x, origin_position.y, self.id_species] = 0
@@ -381,7 +378,7 @@ class Player:
                     # We have won the battle. We convert P% of humans and we have a P% chance to survive
                     our_creature_population_after_battle = int(P*(our_creature_population + number_of_humans))
                     ## Lets build the new board of this potentality
-                    new_game_board = copy.deepcopy(game_board)
+                    new_game_board = game_board.deepcopy()
                     new_game_board.id_board += 1
                     # We are moving from the original cell
                     new_game_board.board[origin_position.x, origin_position.y, self.id_species] = 0
@@ -402,7 +399,7 @@ class Player:
                 score = number_of_enemy
                 
                 ## Lets build the new board of this potentality
-                new_game_board = copy.deepcopy(game_board)
+                new_game_board = game_board.deepcopy()
                 new_game_board.id_board += 1
                 # We are leaving the original cell
                 new_game_board.board[origin_position.x, origin_position.y, self.id_species] = 0
@@ -421,11 +418,16 @@ class Player:
                     P = float(E1)/E2 - 0.5
                 
                 # We win the propability E1. Let's consider esperency
-                if P<0.5:
-                    # We have lost the battle. We lose all our creatures and enemies becomes:
-                    number_of_enemy_after_battle = int((1-P)*number_of_enemy)
+                if P<=0.5 or our_creature_population*1.5 <= number_of_enemy:
+                    ## We have lost the battle. 
+                    # Lets compute number of enemies after battle:
+                    if our_creature_population*1.5 <= number_of_enemy:
+                        number_of_enemy_after_battle = number_of_enemy
+                    else:
+                        number_of_enemy_after_battle = int((1-P)*number_of_enemy)
+                    
                     ## Lets build the new board of this potentality
-                    new_game_board = copy.deepcopy(game_board)
+                    new_game_board = game_board.deepcopy()
                     new_game_board.id_board += 1
                     # We are removed from the original cell
                     new_game_board.board[origin_position.x, origin_position.y, self.id_species] = 0
@@ -437,7 +439,7 @@ class Player:
                     # We have won the battle. We kill every enemy and we have a P% chance to survive
                     our_creature_population_after_battle = int(P*our_creature_population)
                     ## Lets build the new board of this potentality
-                    new_game_board = copy.deepcopy(game_board)
+                    new_game_board = game_board.deepcopy()
                     new_game_board.id_board += 1
                     # We are moving from the original cell
                     new_game_board.board[origin_position.x, origin_position.y, self.id_species] = 0
@@ -511,12 +513,23 @@ class Node:
         self.migration= migration
         self.max_depth = max_depth
         self.value = None
+        self.__childrens = None
     
-    def display(self):
+    def display_board(self):
         print("Node", self.name)
         self.game_board.display()
     
     def childrens(self, verbose=True):
+        """
+        Compute and return children if needed
+        """
+        if self.__childrens == None:
+            self.__childrens = self.get_childrens(verbose=verbose)
+        
+        return self.__childrens
+            
+    
+    def get_childrens(self, verbose=True):
         """
         Compute and return the childrens of the node.
         Manage the value affectation when we are reaching max depth
@@ -526,13 +539,15 @@ class Node:
             return [] if the game is ended of if we have reached the maximum depth
         
         """
-        # Check if last node : max_depth or if the game is ended
+        ## Check if last node : max_depth or if the game is ended
         the_game_is_ended, end_score = self.next_player.is_end_of_game(self.game_board)
         # Affect value using score and return []
         if self.depth >= self.max_depth or the_game_is_ended:
+            # If the game already ended, we have to invert the score as the next player
             dynasty_score = 0
             if the_game_is_ended:
                 dynasty_score+=end_score
+                
             father = self.father
             scores = [self.score]
             while father is not None:
@@ -546,17 +561,17 @@ class Node:
                 dynasty_score += np.argmax(scores)*0.1
             
             self.value = dynasty_score
-            if verbose:
+            if verbose > 1:
                 print("Dynasty score for", self.name, "is", dynasty_score)
             return []
         
-        # Create childrens
+        ## Create childrens
         childrens = []
         moves = self.next_player.possible_moves(self.game_board)
         for id_move, move in enumerate(moves):
             origin_position, population, target_position, score, new_board = move
             migration = Migration(origin_position, population, target_position)
-            if not self.friend_is_next_player:
+            if False and not self.friend_is_next_player:
                 # If friend is not the next player, the score is reversed to be seen as a malus
                 score = -score
             childrens.append(
@@ -574,6 +589,12 @@ class Node:
                 )
             )
         return childrens
+    
+    def display_tree(self):
+        print(("-" + str(self.depth) + "-")*self.depth + self.name + " score:" + str(self.score) + " value:" + str(self.value))
+        for child in self.childrens():
+            if child is not None:
+                child.display()
             
         
 class GameTree:
@@ -596,6 +617,9 @@ class GameTree:
             migration=None,
             max_depth=max_depth
         )
+    
+    def display(self):
+        self.root.display_tree()
 
 
 # ## 5.Alpha-Beta
@@ -727,6 +751,9 @@ class AlphaBeta:
         return node.value
 
 
+# ## 6.Interface strategy
+# Interface the strategy with the project
+
 # In[6]:
 
 
@@ -758,7 +785,7 @@ def interface_strategy(width, height, list_vampires, list_werewolves, list_human
     assert len(list_werewolves) > 0 and len(list_werewolves) > 0
     
     # Get enemy species
-    enemy_species = "W" if our_species == "V" else "W"
+    enemy_species = "W" if our_species == "V" else "V"
     
     # Creating board
     game_board = Board(width=width, height=height)
@@ -787,16 +814,21 @@ def interface_strategy(width, height, list_vampires, list_werewolves, list_human
     
     if verbose > 0:
         # Display initial state
-        game_tree.root.display()
+        game_tree.root.display_board()
         
         # Display best move
-        print("best move:", best_move.migration, "Hoping for", best_val)
-        best_move.display()
+        print("best move:", best_move.migration, "Hoping for", round(best_val, 4))
+        best_move.display_board()
         print("Computed in", round(time.time() - tic, 3), "seconds")
+        print("Tree:")
+        # game_tree.root.display()
     
     # Return the action to perform
     return best_move.migration
 
+
+# ## 7.Test Strategy
+# Test the strategy with random and selected state
 
 # In[7]:
 
@@ -826,23 +858,38 @@ class TestStrategy:
             # Init alpha beta object
             alpha_beta = AlphaBeta(game_tree, verbose=False)
             # Display initial state
-            game_tree.root.display()
+            game_tree.root.display_board()
             # Compute and display best move
             best_move, best_val = alpha_beta.alpha_beta_search(alpha_beta.root)
             print("best move:", best_move.migration, "Hoping for", best_val)
-            best_move.display()
+            best_move.display_board()
             print("Computed in", round(time.time() - tic, 3), "seconds")
         
         else:
             ## INTERFACE TEST
+            """
+            print("Targeted test 1")
             interface_strategy(
                 width=5, 
                 height=5, 
-                list_vampires=[Point(1, 1, 10)], 
-                list_werewolves=[Point(3, 2, 10)], 
-                list_humans=[Point(3, 3, 3), Point(3, 0, 3), Point(0, 3, 5)], 
+                list_vampires=[Point(3, 1, 10)], 
+                list_werewolves=[Point(1, 3, 10)], 
+                list_humans=[Point(2, 3, 5), Point(3, 3, 3), Point(1, 1, 3)], 
                 our_species="V", 
-                max_depth=6, 
+                max_depth=max_depth, 
+                our_name="Dracula", 
+                enemy_name="Garou", 
+                verbose=1)"""
+            
+            print("Targeted test 2")
+            interface_strategy(
+                width=5, 
+                height=5, 
+                list_vampires=[Point(3, 2, 10)], 
+                list_werewolves=[Point(2, 3, 15)], 
+                list_humans=[Point(3, 3, 3), Point(1, 1, 3)], 
+                our_species="V", 
+                max_depth=max_depth, 
                 our_name="Dracula", 
                 enemy_name="Garou", 
                 verbose=1)
@@ -861,5 +908,6 @@ class TestStrategy:
             print("="*30, "\n")
 
 ## Uncomment to run tests
-# TestStrategy.multiple_test(number_of_test=3, max_depth=6)
+# TestStrategy.multiple_test(number_of_test=15, max_depth=6)
+# %prun TestStrategy.test_unit(is_random=False, max_depth=4)
 
