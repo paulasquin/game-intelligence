@@ -233,10 +233,10 @@ class Player:
         
         if len(our_creatures_groups) == 0:
             # We have no creatures left
-            return (True, 0)
+            return (True, -10)
         elif len(enemy_creatures_groups) == 0:
             # We have won, there is no enemy left
-            return (True, 0)
+            return (True, 10)
         else:
             # The game is not finished yet
             return (False, 0)
@@ -512,14 +512,14 @@ class Node:
         self.father = father
         self.migration= migration
         self.max_depth = max_depth
-        self.value = None
+        self.__value = None
         self.__childrens = None
     
     def display_board(self):
         print("Node", self.name)
         self.game_board.display()
     
-    def childrens(self, verbose=True):
+    def childrens(self, verbose=False):
         """
         Compute and return children if needed
         """
@@ -529,7 +529,7 @@ class Node:
         return self.__childrens
             
     
-    def get_childrens(self, verbose=True):
+    def get_childrens(self, verbose=False):
         """
         Compute and return the childrens of the node.
         Manage the value affectation when we are reaching max depth
@@ -541,28 +541,7 @@ class Node:
         """
         ## Check if last node : max_depth or if the game is ended
         the_game_is_ended, end_score = self.next_player.is_end_of_game(self.game_board)
-        # Affect value using score and return []
-        if self.depth >= self.max_depth or the_game_is_ended:
-            # If the game already ended, we have to invert the score as the next player
-            dynasty_score = 0
-            if the_game_is_ended:
-                dynasty_score+=end_score
-                
-            father = self.father
-            scores = [self.score]
-            while father is not None:
-                scores.append(father.score)
-                father = father.father
-            # Dynasty score is increased by the score of the taken nodes
-            dynasty_score += sum(scores)
-            # And we add a bonus point on how quickly we reached the maximum score if any
-            # scores high indice means we are close to the root. The higher is the maximum indice, the better.
-            if max(scores) > 0:
-                dynasty_score += np.argmax(scores)*0.1
-            
-            self.value = dynasty_score
-            if verbose > 1:
-                print("Dynasty score for", self.name, "is", dynasty_score)
+        if the_game_is_ended or self.depth >= self.max_depth:
             return []
         
         ## Create childrens
@@ -571,9 +550,6 @@ class Node:
         for id_move, move in enumerate(moves):
             origin_position, population, target_position, score, new_board = move
             migration = Migration(origin_position, population, target_position)
-            if False and not self.friend_is_next_player:
-                # If friend is not the next player, the score is reversed to be seen as a malus
-                score = -score
             childrens.append(
                 Node(
                     name=self.name + str(id_move),
@@ -590,11 +566,49 @@ class Node:
             )
         return childrens
     
+    def value(self):
+        if self.__value == None:
+            self.__value = self.get_value()
+        
+        return self.__value
+    
+    def get_value(self):
+        dynasty_score = 0
+        # Get end of game score if game is ended
+        the_game_is_ended, end_score = self.next_player.is_end_of_game(self.game_board)
+        if the_game_is_ended:
+            if self.friend_is_next_player:
+                dynasty_score+=end_score
+            else:
+                dynasty_score-=end_score
+                
+        
+        # Get scores from father, giving enemy scores as malus
+        father = self.father
+        scores = [self.score]
+        while father is not None:
+            if father.friend_is_next_player:
+                scores.append(-father.score)
+            else:
+                scores.append(father.score)
+            father = father.father
+        
+        # Dynasty score is increased by the score of the taken nodes
+        dynasty_score += sum(scores)
+        # And we add a bonus point on how quickly we reached the maximum score if any
+        # scores high indice means we are close to the root. The higher is the maximum indice, the better.
+        if max(scores) > 0:
+            dynasty_score += np.argmax(scores)*0.1
+            
+        return dynasty_score
+            
+    
     def display_tree(self):
-        print(("-" + str(self.depth) + "-")*self.depth + self.name + " score:" + str(self.score) + " value:" + str(self.value))
+        print(("-" + str(self.depth) + "-")*self.depth + self.name + " score:" + str(self.score) + " value:" + str(self.value()))
+        self.game_board.display()
         for child in self.childrens():
             if child is not None:
-                child.display()
+                child.display_tree()
             
         
 class GameTree:
@@ -635,7 +649,7 @@ class AlphaBeta:
     :param game_tree: GameTree, the tree of the game
     :param verbose: boolean, set to true to display the min-max computations
     """
-    def __init__(self, game_tree, verbose=True):
+    def __init__(self, game_tree, verbose=False):
         self.game_tree = game_tree  # GameTree
         self.root = game_tree.root  # GameNode
         self.verbose = verbose
@@ -675,7 +689,7 @@ class AlphaBeta:
         """
         if self.verbose:
             print("AlphaBeta-->MAX: Visited Node :: " + node.name)
-            node.display()
+            # node.display_board()
         if self.isTerminal(node):
             return self.getUtility(node)
         infinity = float('inf')
@@ -700,7 +714,7 @@ class AlphaBeta:
         """
         if self.verbose:
             print("AlphaBeta-->MIN: Visited Node :: " + node.name)
-            node.display()
+            # node.display_board()
         if self.isTerminal(node):
             return self.getUtility(node)
         infinity = float('inf')
@@ -748,7 +762,7 @@ class AlphaBeta:
         :return value: int, the node value
         """
         assert node is not None
-        return node.value
+        return node.value()
 
 
 # ## 6.Interface strategy
@@ -821,7 +835,8 @@ def interface_strategy(width, height, list_vampires, list_werewolves, list_human
         best_move.display_board()
         print("Computed in", round(time.time() - tic, 3), "seconds")
         print("Tree:")
-        # game_tree.root.display()
+        if verbose > 1:
+            game_tree.display()
     
     # Return the action to perform
     return best_move.migration
@@ -833,14 +848,13 @@ def interface_strategy(width, height, list_vampires, list_werewolves, list_human
 # In[7]:
 
 
-
 class TestStrategy:
     def test_unit(is_random, max_depth):
         tic = time.time()
         if is_random:
             # Init random size
-            height = random.randint(4, 6)
-            width = random.randint(4, 6)
+            height = random.randint(3, 5)
+            width = random.randint(3, 5)
             # Board size
             game_board = Board(width=width, height=height)
             # Random init
@@ -861,9 +875,12 @@ class TestStrategy:
             game_tree.root.display_board()
             # Compute and display best move
             best_move, best_val = alpha_beta.alpha_beta_search(alpha_beta.root)
-            print("best move:", best_move.migration, "Hoping for", best_val)
+            # Display best move
+            print("best move:", best_move.migration, "Hoping for", round(best_val, 4))
             best_move.display_board()
             print("Computed in", round(time.time() - tic, 3), "seconds")
+            print("Tree:")
+            # game_tree.display()
         
         else:
             ## INTERFACE TEST
@@ -909,5 +926,5 @@ class TestStrategy:
 
 ## Uncomment to run tests
 # TestStrategy.multiple_test(number_of_test=15, max_depth=6)
-# %prun TestStrategy.test_unit(is_random=False, max_depth=4)
+# TestStrategy.test_unit(is_random=False, max_depth=6)
 
