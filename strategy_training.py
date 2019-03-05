@@ -5,7 +5,7 @@
 
 # ## 1.Dependencies
 
-# In[16]:
+# In[1]:
 
 
 import numpy as np
@@ -17,12 +17,18 @@ import time
 # ## 2.Board object
 # Structure and initialisation
 
-# In[17]:
+# In[2]:
 
 
 class Size:
     """
-    A size object for 2D boards, with x and y as attributes
+    Object of size for 2D boards to code x and y attributes
+    
+    :param width: int, width of the board
+    :param height: int, height of the board
+    
+    :attributes x: int, number of rows (height)
+    :attributes y: int, number of columns (width)
     """
     def __init__(self, width, height):
         self.x = width
@@ -30,18 +36,29 @@ class Size:
         
 
 class Point:
+    """
+    Code a point with its coordinates and can store a number to this point
+    :param&attributes x: int, x coordinate, the row id of the point in the Board (starting from 0)
+    :param&attributes y: int, y coordinate, the collumn id of the point in the Board (starting from 0)
+    
+    OPTIONAL
+    :param&attributes n: int, default_value=None, the number of elements in this point
+    """
     def __init__(self, x, y, n=None):
         self.x = x
         self.y = y
         self.n = n
     
     def __repr__(self):
+        """
+        When ask for a print, show the point as 'x_y'
+        """
         return str(self.x) + "_" + str(self.y)
     
         
 class Board:
     """
-    A game board for the game. 
+    A game board for the game.
      ------------->  Y
     |
     |
@@ -54,15 +71,19 @@ class Board:
     
     3rd dimension used for number of Vampires, Werewolves, Humans
     
-    params:
-    width (size of the board)
-    height (size of the board)
+    > PARAMETERS
+    :param width: int, wdith of the board
+    :param height: int, height of the board
     
-    attributes:
-    board
-        1st dimension : x
-        2nd dimension : y
-        3rd dimension : [number_of_vampires, number_of_werewolves, number_of_humans]
+    :attribute board: a 3 dimensional numpy array to describe the state of the board
+        1st dimension : the x dimension (rows)
+        2nd dimension : the y dimension (columns)
+        3rd dimension : list of 3 numbers: [number_of_vampires, number_of_werewolves, number_of_humans]
+    :attribute id_V: int, id of vampires in the 3rd dimension. Should be 0
+    :attribute id_W: int, id of werewolves in the 3rd dimension. Should be 1
+    :attribute id_H: int, id of humans in the 3rd dimension. Should be 2
+    :attribute size: Size, object to store the board size
+    :attribute id_board: int, id of the current board
     
     """
     
@@ -73,9 +94,10 @@ class Board:
         
     def __init__(self, width, height):
         """
-        Init board with given width and height
+        Constuctor of the board. Initialize it with np.zeros
+        :param width: int, width of the board
+        :param height: int, height of the board
         """
-        
         self.size = Size(width, height)
         self.board = np.zeros((self.size.x, self.size.y, 3), dtype=np.int8)
     
@@ -83,9 +105,9 @@ class Board:
     def init_board_set(self, list_vampires, list_werewolves, list_humans, id_board=0):
         """
         Fill a board with known position of species
-        :param list_vampires: list of Point object, indicating position and number of vampires
-        :param list_werewolves: list of Point object, indicating position and number of werewolves
-        :param list_humans: list of Point object, indicating position and number of humans
+        :param list_vampires: list of Point, indicating position and number of vampires
+        :param list_werewolves: list of Point, indicating position and number of werewolves
+        :param list_humans: list of Point, indicating position and number of humans
         """
         self.id_board = id_board
         for vampire_group in list_vampires:
@@ -99,7 +121,11 @@ class Board:
     
     def init_board_random(self):
         """
-        Init the self.board by creating vampires, werewolves and humans in it
+        Randomly affect vampires, werewolves and human to the board.
+        Use still non random parameters : 
+            1 group of 10 Vampires
+            1 group of 10 Werewolves
+            3 groups of 3, 3, 5 humans
         """
         self.id_board = 0
         ## Affecting vampires in board
@@ -174,10 +200,17 @@ class Board:
 # ## 3.Player object
 # Moves and their scores
 
-# In[18]:
+# In[3]:
 
 
 class Player:
+    """
+    An object to describe the player attributes and his potential moves
+    
+    :attribute name: string, name of the player
+    :attribute id_species: int, id of the species used, 0, 1 or 2, see Board object
+    :attribute species: string, name of the species, "V" or "W"
+    """
     def __init__(self, name, species):
         # Storing player name
         self.name = name
@@ -198,6 +231,7 @@ class Player:
     def is_end_of_game(self, game_board):
         """
         Check if the game is still running.
+        :param game_board: Board, the game board state to check if the game is ended
         
         :return the_game_is_ended: True if the game is ended, False else
         :return score: 0 if game not ended, +1000 if we won, -1000 if we lost 
@@ -218,10 +252,18 @@ class Player:
         
     def possible_moves(self, game_board):
         """
+        Compute and return possibles moves with scores.
+        
         :param game_board: the game board object
         
-        Return a list of possible moves in this format :
-        (original_point, number_of_creature_moving, final_point, score_of_move, new_potential_board)
+        :return moves: list of possibles moves to the format 
+            (
+            original_point, :Point::
+            number_of_creature_moving, :int:
+            final_point, :Point
+            score, :int:
+            new_potential_board :Board:
+            )
         """
         
         # Scanning where are our creatures
@@ -262,13 +304,17 @@ class Player:
         """
         Return the score of the proposed creatures move along with the new board related to this move
         
+        :param origin_position: Point, where the creatures came from
+        :param our_creature_population: int, number of creatures moving
+        :param target_position: Point where the creature are going to
+        :param game_board: Board, the board state before the move
+        
         :return score: 
             -666: if the move is forbidden
             <0: if the move makes us loss creatures more than killing others for instance 
             0: if the move is neutral
             >0: if we have converted humans, or kill other creatures more than they killed us
-        :return new_board: 
-            new board state
+        :return new_game_board: Board, The new Board after applying the move
         """
         
         target_cell = game_board.board[target_position.x, target_position.y]
@@ -298,7 +344,6 @@ class Player:
                 # If we are 50% more than humans, we convert all of them
                 # Lets consider this as a score equal to "number of converted humans"
                 score = number_of_humans
-                
                 ## Lets build the new board of this potentality
                 new_game_board = copy.deepcopy(game_board)
                 new_game_board.id_board += 1
@@ -309,15 +354,17 @@ class Player:
                 # We sum number of converted humans and previous our_creatures to create new number of our_creatures
                 new_game_board.board[target_position.x, target_position.y, self.id_species] = number_of_humans + our_creature_population
                 return score, new_game_board
+            
             else:
                 E1 = our_creature_population
                 E2 = number_of_humans
                 if E1 <= E2:
-                    P = float(E1)/(2*E2) # Using float if using Python2
+                    P = float(E1)/(2*E2) # force the use of float if using Python2
+                    
                 else:
                     P = float(E1)/E2 - 0.5
-                
                 # We win the propability E1. Let's consider esperency
+                
                 if P<0.5:
                     # We have lost the battle. We lose all our creatures and humans also have loses:
                     number_of_humans_after_battle = int((1-P)*number_of_humans)
@@ -329,6 +376,7 @@ class Player:
                     # We are refreshing number of humans in the targeted cell
                     new_game_board.board[target_position.x, target_position.y, game_board.id_H] = number_of_humans_after_battle
                     return -our_creature_population, new_game_board
+                
                 else:
                     # We have won the battle. We convert P% of humans and we have a P% chance to survive
                     our_creature_population_after_battle = int(P*(our_creature_population + number_of_humans))
@@ -342,7 +390,7 @@ class Player:
                     # We are comming in the targeted cell, after winning in the battlefield
                     new_game_board.board[target_position.x, target_position.y, self.id_species] = our_creature_population_after_battle
                     return our_creature_population_after_battle, new_game_board
-        
+                
         else:
             # If not humans and not our species, but still there is a species in this cell, it is the enemy creature
             enemy_id = (self.id_species + 1)%2
@@ -363,11 +411,12 @@ class Player:
                 # We move to the new cell
                 new_game_board.board[target_position.x, target_position.y, self.id_species] = our_creature_population
                 return score, new_game_board
+            
             else:
                 E1 = our_creature_population
                 E2 = number_of_enemy
                 if E1 <= E2:
-                    P = float(E1)/(2*E2) # Using float if using Python2
+                    P = float(E1)/(2*E2) # force the use of float if using Python2
                 else:
                     P = float(E1)/E2 - 0.5
                 
@@ -383,6 +432,7 @@ class Player:
                     # We are refreshing number of enemies in the targeted cell
                     new_game_board.board[target_position.x, target_position.y, enemy_id] = number_of_enemy_after_battle
                     return -our_creature_population, new_game_board
+                
                 else:
                     # We have won the battle. We kill every enemy and we have a P% chance to survive
                     our_creature_population_after_battle = int(P*our_creature_population)
@@ -412,15 +462,16 @@ class Player:
 # ## 4.Game tree architecture
 # Build a tree of the potential possibilities
 
-# In[19]:
+# In[4]:
 
 
 class Migration:
     """
-    Object to store a migration
-    :attribute origin_position: Point
-    :attribute population: integer, number of creatures moving
-    :attribute target_position: Point
+    Object to store a migration of a number of creatures from a Point to another
+    
+    :param&attribute origin_position: Point
+    :param&attribute population: integer, number of creatures moving
+    :param&attribute target_position: Point
     """
     def __init__(self, origin_position, population, target_position):
         self.origin_position = origin_position
@@ -433,15 +484,20 @@ class Migration:
 class Node:
     def __init__(self, name, last_player, next_player, game_board, score, friend_is_next_player, depth, father, migration, max_depth):
         """
-        :param name: name of the node, a str
-        :param last_player: the last player to have plated
-        :param next_player: the next player
-        :param game_board: a game_board object
-        :param score: the inner score of this node
-        :param friend_is_next_player: boolean
-        :param depth: actual depth in the search tree
-        :param father: the father node
-        :param migration: the migration object
+        A game_tree node: a state of the game
+        
+        :param name: string, name of the node
+        :param last_player: Player, the last player to have plated
+        :param next_player: Player, the next player
+        :param game_board: Board, a game_board object
+        :param score: int, the inner score of this node
+        :param friend_is_next_player: boolean, True if the next player to move is the friend
+        :param depth: int, actual depth in the search tree
+        :param father: Node, the father node
+        :param migration: Migration, the migration object the lead to this node
+        :param max_depth: int, the maximum depth of a node
+        
+        :attribute value: int, the value of the node, for the alpha_beta search algorithm
         
         """
         self.name = name
@@ -462,14 +518,21 @@ class Node:
     
     def childrens(self, verbose=True):
         """
-        Return childrens moves as a list of nodes
-        OR return None if game is ended
-        OR return -1 if the reached max depth
+        Compute and return the childrens of the node.
+        Manage the value affectation when we are reaching max depth
+        
+        :param verbose: boolean, set to True to display more information on nodes.
+        :return childrens: list of Nodes, the potential Nodes generated from the current state
+            return [] if the game is ended of if we have reached the maximum depth
         
         """
-        # Check if max depth
-        if self.depth >= self.max_depth:
+        # Check if last node : max_depth or if the game is ended
+        the_game_is_ended, end_score = self.next_player.is_end_of_game(self.game_board)
+        # Affect value using score and return []
+        if self.depth >= self.max_depth or the_game_is_ended:
             dynasty_score = 0
+            if the_game_is_ended:
+                dynasty_score+=end_score
             father = self.father
             scores = [self.score]
             while father is not None:
@@ -485,16 +548,6 @@ class Node:
             self.value = dynasty_score
             if verbose:
                 print("Dynasty score for", self.name, "is", dynasty_score)
-            return []
-        
-        # Check if the game is ended
-        the_game_is_ended, end_score = self.next_player.is_end_of_game(self.game_board)
-        
-        if the_game_is_ended and self.friend_is_next_player:
-            self.value = end_score
-            return []
-        elif the_game_is_ended and not self.friend_is_next_player:
-            self.value = -end_score
             return []
         
         # Create childrens
@@ -525,7 +578,6 @@ class Node:
         
 class GameTree:
     def __init__(self, our_player, enemy_player, init_game_board, friend_is_next_player=True, max_depth=6):
-        left_depth = 8
         if friend_is_next_player:
             last_player = enemy_player
             next_player = our_player
@@ -549,18 +601,29 @@ class GameTree:
 # ## 5.Alpha-Beta
 # Use the game tree and alpha-beta technique to select the best move to perform
 
-# In[20]:
+# In[5]:
 
 
 class AlphaBeta:
-    # print utility value of root node (assuming it is max)
-    # print names of all nodes visited during search
+    """
+    The alpha beta search tool to explore the game_tree and generate only usefull chidlrens
+    
+    :param game_tree: GameTree, the tree of the game
+    :param verbose: boolean, set to true to display the min-max computations
+    """
     def __init__(self, game_tree, verbose=True):
         self.game_tree = game_tree  # GameTree
         self.root = game_tree.root  # GameNode
         self.verbose = verbose
 
     def alpha_beta_search(self, node):
+        """
+        Manage the alpha beta search by callig the max_value and min_value functions
+        :param node: Node, the current state node
+        
+        :return best_state: Board, the best board to move to
+        :return best_val: int, the hoped value with this move
+        """
         infinity = float('inf')
         best_val = -infinity
         beta = infinity
@@ -578,6 +641,14 @@ class AlphaBeta:
         return best_state, best_val
 
     def max_value(self, node, alpha, beta):
+        """
+        Max value function for the alpha beta search
+        :param node: Node
+        :param alpha: int
+        :param beta: int
+        
+        :return value: int
+        """
         if self.verbose:
             print("AlphaBeta-->MAX: Visited Node :: " + node.name)
             node.display()
@@ -595,6 +666,14 @@ class AlphaBeta:
         return value
 
     def min_value(self, node, alpha, beta):
+        """
+        Max value function for the alpha beta search
+        :param node: Node
+        :param alpha: int
+        :param beta: int
+        
+        :return value: int
+        """
         if self.verbose:
             print("AlphaBeta-->MIN: Visited Node :: " + node.name)
             node.display()
@@ -617,29 +696,42 @@ class AlphaBeta:
 
     # successor states in a game tree are the child nodes...
     def getSuccessors(self, node):
+        """
+        Get the node childrens as we need them
+        :param node; Node
+        
+        :return childrens: list of Nodes, the children nodes
+        """
         assert node is not None
         return node.childrens(self.verbose)
 
     # return true if the node has NO children (successor states)
     # return false if the node has children (successor states)
     def isTerminal(self, node):
+        """
+        Check if the node is a terminal one
+        :param node: Node
+        :return is_terminal: boolean, True if is terminal, False else
+        """
         assert node is not None
         num_childrens = len(node.childrens(self.verbose))
         return num_childrens == 0
 
     def getUtility(self, node):
+        """
+        Get the value of a node
+        :param node: Node
+        :return value: int, the node value
+        """
         assert node is not None
         return node.value
 
 
-# In[21]:
+# In[6]:
 
 
 def interface_strategy(width, height, list_vampires, list_werewolves, list_humans, our_species, max_depth=6, our_name="Us", enemy_name="Them", verbose=0):
     """
-    NOTE : Point is an object declared in this file, with x, y and n attibutes, 
-    It is used to describe positon and population of creatures in the board.
-    
     > MANDATORY PARAMETERS
     :param width: int, width of the board
     :param height: int, height of the board
@@ -654,14 +746,8 @@ def interface_strategy(width, height, list_vampires, list_werewolves, list_human
     :param enemy_name: string, default_value = "Them" the name of the enemy team. 
     :param verbose: integer, default_value = 0, put to 0 for nothing, 1 for the board, 2 for the whole strategy process.
     
-    NOTE : Migration is an object declared in this file. it has attributes
-        :attribute origin_position: Point, the position of our creatures moving
-        :attribute population: integer, the number of our creatures moving
-        :attribute target_position: Point, the position where the creatures are moving
-    
     > RETURN
     :return best_move_migration: Migration, the best migration computed from the state provided
-    
     """
     # Compute time
     tic = time.time()
@@ -712,7 +798,7 @@ def interface_strategy(width, height, list_vampires, list_werewolves, list_human
     return best_move.migration
 
 
-# In[24]:
+# In[7]:
 
 
 
