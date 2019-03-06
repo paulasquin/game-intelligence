@@ -931,7 +931,7 @@ class TestStrategy:
             print("="*30, "\n")
 
 ## Uncomment to run tests
-TestStrategy.multiple_test(number_of_test=15, max_depth=6)
+# TestStrategy.multiple_test(number_of_test=15, max_depth=6)
 # TestStrategy.test_unit(is_random=False, max_depth=6)
 
 #TODO : improve value : it's computed on the vampires point of view, not werewolves
