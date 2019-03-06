@@ -233,10 +233,10 @@ class Player:
         
         if len(our_creatures_groups) == 0:
             # We have no creatures left
-            return (True, -10)
+            return (True, -0)
         elif len(enemy_creatures_groups) == 0:
             # We have won, there is no enemy left
-            return (True, 10)
+            return (True, 0)
         else:
             # The game is not finished yet
             return (False, 0)
@@ -569,7 +569,6 @@ class Node:
     def value(self):
         if self.__value == None:
             self.__value = self.get_value()
-        
         return self.__value
     
     def get_value(self):
@@ -584,14 +583,21 @@ class Node:
                 
         
         # Get scores from father, giving enemy scores as malus
-        father = self.father
-        scores = [self.score]
+        father = self
+        scores = []
         while father is not None:
-            if father.friend_is_next_player:
-                scores.append(-father.score)
+            if self.friend_is_next_player:
+                if father.friend_is_next_player:
+                    scores.append(-father.score)
+                else:
+                    scores.append(father.score)
+                father = father.father
             else:
-                scores.append(father.score)
-            father = father.father
+                if father.friend_is_next_player:
+                    scores.append(father.score)
+                else:
+                    scores.append(-father.score)
+                father = father.father
         
         # Dynasty score is increased by the score of the taken nodes
         dynasty_score += sum(scores)
@@ -845,7 +851,7 @@ def interface_strategy(width, height, list_vampires, list_werewolves, list_human
 # ## 7.Test Strategy
 # Test the strategy with random and selected state
 
-# In[7]:
+# In[9]:
 
 
 class TestStrategy:
@@ -902,8 +908,8 @@ class TestStrategy:
             interface_strategy(
                 width=5, 
                 height=5, 
-                list_vampires=[Point(3, 2, 10)], 
-                list_werewolves=[Point(2, 3, 15)], 
+                list_vampires=[Point(3, 2, 15)], 
+                list_werewolves=[Point(2, 3, 10)], 
                 list_humans=[Point(3, 3, 3), Point(1, 1, 3)], 
                 our_species="V", 
                 max_depth=max_depth, 
@@ -925,6 +931,9 @@ class TestStrategy:
             print("="*30, "\n")
 
 ## Uncomment to run tests
-# TestStrategy.multiple_test(number_of_test=15, max_depth=6)
+TestStrategy.multiple_test(number_of_test=15, max_depth=6)
 # TestStrategy.test_unit(is_random=False, max_depth=6)
+
+#TODO : improve value : it's computed on the vampires point of view, not werewolves
+# TODO
 
