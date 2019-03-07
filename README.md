@@ -19,7 +19,7 @@ pip3 install -r requirements.txt
 # Start the project  
 Run the program Resources/VampiresVSWerewolvesGameServer.exe then execute from the "game-intelligence" folder:  
 ```bash
-python3 main.py
+python connect_server.py --myparams 127.0.0.1 5555
 ```
 
 # Functions explaination
