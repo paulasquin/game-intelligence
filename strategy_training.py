@@ -749,6 +749,20 @@ class AlphaBeta:
                 (state.game_board.board[:,:,:] > 0) & (state.game_board.board[:,:,:] <= number_our_creatures/1.5)
             )
             
+            # If not group we outnumber, check if we are as numerous as other groups, and go toward them
+            if len(positions_to_attack) == 0:
+                # We have multiple best moves. We have to choose one.
+                # If we outnumber enemies by 50%, move towards them
+                # Else, move toward the closest group of human we outnumber of more than 50%
+                # >>> Move toward the closest group we are more than 50% of.
+
+                # Compute position of group to attack
+                number_our_creatures, _ = state.last_player.number_of_creatures(state.game_board)
+                # Get groups where there is creatures (> 0) and that we outnumber by more that 50%
+                positions_to_attack = np.argwhere(
+                    (state.game_board.board[:,:,:] > 0) & (state.game_board.board[:,:,:] <= number_our_creatures)
+                )
+            
             # If no such group
             if len(positions_to_attack) == 0:
                 # We will avoid the groups
