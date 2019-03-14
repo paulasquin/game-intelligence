@@ -1057,6 +1057,3 @@ class TestStrategy:
 # TestStrategy.multiple_test(number_of_test=10, max_depth=3)
 # %prun TestStrategy.test_unit(is_random=False, max_depth=5)
 
-#TODO : improve value : it's computed on the vampires point of view, not werewolves
-# TODO
-

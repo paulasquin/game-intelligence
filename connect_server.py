@@ -271,7 +271,7 @@ def playing_game(srv):
             print('A UPD Packet has been received')
             srv.update_agent_state()
             # print(srv.agent_state)
-            print('------------------------------------------------------------------------------------------')
+            print('-'*20)
             
             # Update the matrix
             srv.update_board_matrix()
@@ -294,7 +294,7 @@ def playing_game(srv):
                 enemy_name="Garou", 
                 verbose=1)
             srv.send_move(best_move_migration)
-        # END--------------------------------------------------------------------------------------------------------------
+        # END
         elif header == "END":
             print('The END Packet has been received')
             print("The Game has ended")
@@ -302,7 +302,7 @@ def playing_game(srv):
             srv.sock.close()
             sys.exit()
 
-        # BYE------------------------------------------------------------------------------------------------------------
+        # BYE
         elif header == "BYE":
             print('BYE Packet has been received')
             print("Closing the connection now")
