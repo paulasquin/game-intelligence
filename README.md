@@ -1,19 +1,19 @@
 # game-intelligence
-Game from CentraleSupélec on Artificial Intelligence dual team confrontation by [Ayush Rai](https://www.linkedin.com/in/ayush-rai-8ab9b24a/) and [Paul Asquin](https://www.linkedin.com/in/paulasquin).
+Game from CentraleSupélec on Artificial Intelligence face to face confrontation by [Ayush Rai](https://www.linkedin.com/in/ayush-rai-8ab9b24a/) and [Paul Asquin](https://www.linkedin.com/in/paulasquin).
 
 # Install the project  
+The gameboard framework has been developped by our teacher for a Windows environment. Then, if you want to reproduce this project, be sure to run it on a Windows environnement. Still, you can absolutely run game-strategy tests in any environment, using nothing but a jupyter notebook.  
 
 ## Clone the repo
-Be sure to execute the project in a Windows environnement, as the server to run the tests is a .exe file written to work exclusively on Windows.  
-Then run:   
 ```bash
-git clone https://github.com/2018-cs-msc-fai-team6/game-intelligence.git
+git clone https://github.com/paulasquin/game-intelligence.git
 cd game-intelligence
 ```
 
 ## Get the dependencies
+Docker may have been an overkill regarding the depencies we need. Just be sure to run this project using python3 and install the requirements:
 ```bash
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 # Start the project  
@@ -21,57 +21,11 @@ Run the program Resources/VampiresVSWerewolvesGameServer.exe then execute from t
 ```bash
 python connect_server.py --myparams 127.0.0.1 5555
 ```
+This will run a instance of a player. Run the same command in a new terminal to connect a second player.
 
-# Functions explaination
-
-## interface_strategy
-This function allows us to compute the best move to perfom given a game state. 
-
-Here is the way to use it:
-
-```
-from strategy_training import *
-
-best_move_migration = interface_strategy(width, height, list_vampires, list_werewolves, list_humans, our_species, max_depth, our_name, enemy_name, verbose):
-```
-Here is how to use it
-
-```
-NOTE : Point is an object declared in the strategy_training file, with x, y and n attibutes, integers for position and number of creatures.  
-It is used to describe positon and population of creatures in the board.
-
-The game board axis: 
-     ------------->  Y
-    |
-    |
-    |
-    |
-    |
-    v
-    
-    X
-Paramers and return of interface_strategy()
-
-> MANDATORY PARAMETERS
-:param width: int, width of the board
-:param height: int, height of the board
-:param list_vampires: list of Point describing where are the vampires. It can be on length 1 or more.
-:param list_werewolves: list of Point describing where are the werewolves. It can be on length 1 or more.
-:param list_humans: list of Point describing where are the werewolves. It can be on length 0 or more.
-:param our_species: string, "V" if we play vampires, "W" if we play werewolves
-
-> OPTIONAL PARAMETERS
-:param max_depth: int, default_value = 6, maximum depth of the game tree. Higher give better prediction but cost computation time.
-:param our_name: string, default_value = "Us" the name of the team we are playing. 
-:param enemy_name: string, default_value = "Them" the name of the enemy team. 
-:param verbose: integer, default_value = 0, put to 0 for nothing, 1 for the board, 2 for the whole strategy process.
-
-NOTE : Migration is an object declared in this file. it has attributes
-    :attribute origin_position: Point, the position of our creatures moving
-    :attribute population: integer, the number of our creatures moving
-    :attribute target_position: Point, the position where the creatures are moving
-
-> RETURN
-:return best_move_migration: Migration, the best migration computed from the state provided
-
-```
+# Files introduction
+- [strategy_training.ipynb](strategy_training.ipynb): AI strategy implementation. Dev was done in a jupyter notebook. This is the most important file you want to look at as it is the game strategy.
+- [connect_server.ipynb](connect_server.ipynb): Server management implementation. Dev was done in a jupyter notebook.
+- ".py: notebook exportation in regular python files to be run for the server connection.
+- [Projectv10.pdf](Projectv10.pdf): Project instructions
+- Resources Folder: Server runnable file and its dependencies. Use \*.xml and \*.config to configure maps and player max response time.
